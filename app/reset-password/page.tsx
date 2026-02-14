@@ -18,7 +18,6 @@ export default function ResetPasswordPage() {
         const url = window.location.href;
         const hasCode = url.includes("code=");
         if (hasCode && "exchangeCodeForSession" in supabase.auth) {
-          // @ts-expect-error - optional in some versions
           const { error } = await supabase.auth.exchangeCodeForSession(url);
           if (error) {
             setMsg(`${t("common_error_prefix")} ${error.message}`);
