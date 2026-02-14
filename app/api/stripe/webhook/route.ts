@@ -26,66 +26,63 @@ export async function POST(req: NextRequest) {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err: any) {
-    console.error("❌ Webhook signature verification failed:", err.message);
+    console.error("Webhook signature verification failed:", err.message);
     return new Response("Webhook Error", { status: 400 });
   }
 
-  console.log("✅ WEBHOOK HIT:", event.type);
-
-  // 1) Checkout session completed
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-
-    console.log("Session id:", session.id);
-    console.log("Session metadata:", session.metadata);
-
-    const bookingId = session.metadata?.booking_id;
-
-    if (!bookingId) {
-      console.error("❌ Missing metadata.booking_id on session", session.id);
-      // 200 OK: Stripe ne retry-a, ali ti vidiš log i znaš da je metadata problem
-      return new Response("OK", { status: 200 });
-    }
-
-    // provjeri postoji li booking (debug)
-    const { data: existing, error: readErr } = await supabaseAdmin
-      .from("bookings")
-      .select("id, paid_at, status")
-      .eq("id", bookingId)
-      .single();
-
-    if (readErr || !existing) {
-      console.error("❌ Booking not found for bookingId:", bookingId, readErr?.message);
-      return new Response("OK", { status: 200 });
-    }
-
-    // idempotentno: ako je već paid, ne diraj
-    if (existing.paid_at || existing.status === "paid") {
-      console.log("ℹ️ Booking already marked paid:", bookingId);
-      return new Response("OK", { status: 200 });
-    }
-
-    const paymentIntentId =
-      session.payment_intent ? String(session.payment_intent) : null;
-
-    const { error: updErr } = await supabaseAdmin
-      .from("bookings")
-      .update({
-        paid_at: new Date().toISOString(),
-        status: "paid",
-        stripe_payment_intent_id: paymentIntentId,
-      })
-      .eq("id", bookingId)
-      .is("paid_at", null);
-
-    if (updErr) {
-      console.error("❌ Supabase update error:", updErr.message);
-      // 500 => Stripe će retry-at webhook
-      return new Response("DB update failed", { status: 500 });
-    }
-
-    console.log("✅ Booking updated as paid:", bookingId);
+  if (event.type !== "checkout.session.completed") {
     return new Response("OK", { status: 200 });
+  }
+
+  const session = event.data.object as Stripe.Checkout.Session;
+  const bookingId = session.metadata?.booking_id;
+
+  if (!bookingId) {
+    console.error("Missing metadata.booking_id on session", session.id);
+    return new Response("OK", { status: 200 });
+  }
+
+  const { data: existing, error: readErr } = await supabaseAdmin
+    .from("bookings")
+    .select("id,item_id,start_date,end_date,paid_at,status")
+    .eq("id", bookingId)
+    .single();
+
+  if (readErr || !existing) {
+    console.error("Booking not found for bookingId:", bookingId, readErr?.message);
+    return new Response("OK", { status: 200 });
+  }
+
+  if (existing.paid_at || existing.status === "paid") {
+    return new Response("OK", { status: 200 });
+  }
+
+  const { error: updErr } = await supabaseAdmin
+    .from("bookings")
+    .update({
+      paid_at: new Date().toISOString(),
+      status: "paid",
+    })
+    .eq("id", bookingId)
+    .is("paid_at", null);
+
+  if (updErr) {
+    console.error("Supabase update error:", updErr.message);
+    return new Response("DB update failed", { status: 500 });
+  }
+
+  const { error: rejectErr } = await supabaseAdmin
+    .from("bookings")
+    .update({ status: "rejected" })
+    .eq("item_id", existing.item_id)
+    .eq("status", "pending")
+    .lt("start_date", existing.end_date)
+    .gt("end_date", existing.start_date)
+    .neq("id", bookingId);
+
+  if (rejectErr) {
+    console.error("Reject pending overlaps failed:", rejectErr.message);
+    return new Response("DB update failed", { status: 500 });
   }
 
   return new Response("OK", { status: 200 });
