@@ -111,13 +111,13 @@ export default function ChatPage() {
       return;
     }
 
-    const t = text.trim();
-    if (!t) return;
+    const textValue = text.trim();
+    if (!textValue) return;
 
     const { error } = await supabase.from("messages").insert({
       booking_id: bookingId,
       sender_id: user.id,
-      text: t,
+      text: textValue,
     });
 
     if (error) setErr(error.message);
