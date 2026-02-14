@@ -200,7 +200,7 @@ export default function Home() {
     const categoryParam = searchParams.get("category");
     if (!categoryParam) return;
     if (categories.some((c) => c.key === categoryParam)) {
-      setCategoryFilter(categoryParam as CategoryKey);
+      setCategoryFilter([categoryParam as CategoryKey]);
     }
   }, [searchParams]);
 
