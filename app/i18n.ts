@@ -628,8 +628,6 @@ export const dictionary: Record<Lang, Record<string, string>> = {
     admin_business_field_year: "Year established",
     admin_business_field_locations: "Locations",
     admin_business_field_status: "Status",
-    admin_email_logs_title: "Email logs",
-    admin_email_logs_empty: "No email logs.",
     admin_email_logs_subject: "Subject",
     admin_email_logs_context: "Context",
     admin_email_logs_context_id: "Context ID",
