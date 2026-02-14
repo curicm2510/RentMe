@@ -15,8 +15,8 @@ export default function NavBar() {
     let mounted = true;
 
     const load = async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data.user;
+      const { data } = await supabase.auth.getSession();
+      const user = data.session?.user ?? null;
       if (mounted) setIsLoggedIn(Boolean(user));
       if (user) {
         const { data: prof } = await supabase
