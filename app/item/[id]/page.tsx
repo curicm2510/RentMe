@@ -469,7 +469,7 @@ export default function ItemPage() {
     return Math.round(dp[days] * 100) / 100;
   };
 
-  const scrollList = (ref: React.RefObject<HTMLDivElement>, dir: number) => {
+  const scrollList = (ref: React.RefObject<HTMLDivElement | null>, dir: number) => {
     const el = ref.current;
     if (!el) return;
     const amount = Math.max(220, Math.floor(el.clientWidth * 0.8));
