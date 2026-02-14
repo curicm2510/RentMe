@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-    const stripe = new Stripe(secretKey, { apiVersion: "2024-06-20" });
+    const stripe = new Stripe(secretKey, { apiVersion: "2025-12-15.clover" });
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
