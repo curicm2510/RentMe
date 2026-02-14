@@ -21,6 +21,7 @@ type Item = {
   price_per_day: number;
   price_3_days: number | null;
   price_7_days: number | null;
+  cancellation_policy?: "flexible" | "medium" | "strict" | null;
   city: string;
   neighborhood?: string | null;
   category: CategoryKey | null;
