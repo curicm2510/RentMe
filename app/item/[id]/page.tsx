@@ -28,6 +28,12 @@ type ItemImage = {
   url: string;
 };
 
+type ItemImageRow = {
+  item_id: string;
+  url: string;
+  created_at: string;
+};
+
 type ApprovedBooking = {
   id: string;
   start_date: string;
