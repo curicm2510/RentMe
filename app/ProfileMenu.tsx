@@ -20,7 +20,11 @@ export default function ProfileMenu() {
     const load = async () => {
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
-      const user = data.session?.user ?? null;
+      let user = data.session?.user ?? null;
+      if (!user) {
+        const { data: userData } = await supabase.auth.getUser();
+        user = userData.user ?? null;
+      }
       setHasSession(Boolean(user));
       setEmail(user?.email ?? null);
 
