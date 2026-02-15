@@ -11,6 +11,7 @@ export default function ProfileMenu() {
   const [email, setEmail] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -20,6 +21,7 @@ export default function ProfileMenu() {
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
       const user = data.session?.user ?? null;
+      setHasSession(Boolean(user));
       setEmail(user?.email ?? null);
 
       if (user) {
@@ -39,6 +41,7 @@ export default function ProfileMenu() {
     load();
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setHasSession(Boolean(session?.user));
       setEmail(session?.user?.email ?? null);
       if (session?.user) {
         const { data: prof } = await supabase
@@ -117,7 +120,7 @@ export default function ProfileMenu() {
               gap: 8,
             }}
           >
-            <span>{email ? email : t("nav_not_logged")}</span>
+            <span>{hasSession ? email || t("nav_logged_in") : t("nav_not_logged")}</span>
             {isAdmin && (
               <span
                 style={{
