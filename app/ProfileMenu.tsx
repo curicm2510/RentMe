@@ -5,6 +5,15 @@ import { supabase } from "../lib/supabaseClient";
 import { useI18n } from "./I18nProvider";
 import Avatar from "./Avatar";
 
+const hasStoredSession = () => {
+  if (typeof window === "undefined") return false;
+  for (let i = 0; i < window.localStorage.length; i += 1) {
+    const key = window.localStorage.key(i);
+    if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) return true;
+  }
+  return false;
+};
+
 export default function ProfileMenu() {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -25,7 +34,7 @@ export default function ProfileMenu() {
         const { data: userData } = await supabase.auth.getUser();
         user = userData.user ?? null;
       }
-      setHasSession(Boolean(user));
+      setHasSession(Boolean(user) || hasStoredSession());
       setEmail(user?.email ?? null);
 
       if (user) {
@@ -45,7 +54,7 @@ export default function ProfileMenu() {
     load();
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setHasSession(Boolean(session?.user));
+      setHasSession(Boolean(session?.user) || hasStoredSession());
       setEmail(session?.user?.email ?? null);
       if (session?.user) {
         const { data: prof } = await supabase
